@@ -1,0 +1,23 @@
+diff -Naur luna-10.3.0.old/etc/Chrystoki.conf luna-10.3.0/etc/Chrystoki.conf
+--- luna-10.3.0.old/etc/Chrystoki.conf	2021-02-12 14:52:24.580917521 +0100
++++ luna-10.3.0/etc/Chrystoki.conf	2021-02-12 15:08:27.579465985 +0100
+@@ -1,6 +1,5 @@
+ Chrystoki2 = {
+-   LibUNIX = /usr/lib/libCryptoki2.so;
+-   LibUNIX64 = /usr/lib/libCryptoki2_64.so;
++   LibUNIX64 = /usr/lib64/libCryptoki2_64.so;
+ }
+ 
+ Luna = {
+diff -Naur luna-10.3.0.old/etc/pedServer.conf luna-10.3.0/etc/pedServer.conf
+--- luna-10.3.0.old/etc/pedServer.conf	2021-02-12 14:52:24.580917521 +0100
++++ luna-10.3.0/etc/pedServer.conf	2021-02-12 15:08:18.659321897 +0100
+@@ -21,6 +21,6 @@
+ }
+ 
+ Appliances  = {
+-   SSLConfigFile = /usr/safenet/lunaclient/bin/openssl.cnf;
+-   ServerCAFile = /usr/safenet/lunaclient/cert/PedServerCAFile.pem
++   SSLConfigFile = /etc/lunaclient/openssl.cnf;
++   ServerCAFile = /etc/lunaclient/cert/PedServerCAFile.pem
+ }

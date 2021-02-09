@@ -3,8 +3,8 @@ Description=Luna PED Client
 After=network.target nss-lookup.target
 
 [Service]
-ExecStart=pedClient -logfilename /var/log/luna/remotePedClientLog.log -m start
-ExecStop=pedClient -logfilename /var/log/luna/remotePedClientLog.log -m stop
+ExecStart=/usr/sbin/pedClient -logfilename /var/log/luna/remotePedClientLog.log -m start
+ExecStop=/usr/sbin/pedClient -logfilename /var/log/luna/remotePedClientLog.log -m stop
 Restart=on-failure
 Type=forking
 
