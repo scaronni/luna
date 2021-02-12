@@ -1,0 +1,12 @@
+[Unit]
+Description=Luna PED Server
+After=network.target nss-lookup.target
+
+[Service]
+ExecStart=/usr/sbin/PedServer -configfile /etc/lunaclient/pedServer.conf -logfilename /var/log/luna/remotePedServerLog.log -m start
+ExecStop=/usr/sbin/PedServer -configfile /etc/lunaclient/pedServer.conf -logfilename /var/log/luna/remotePedServerLog.log -m stop
+Restart=on-failure
+Type=forking
+
+[Install]
+WantedBy=multi-user.target

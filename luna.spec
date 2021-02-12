@@ -7,7 +7,6 @@
 # - snmp package
 # - cloud-plugin-linux64-x86 ?
 # - safenet-softtoken_client ?
-# - rbs/rbs_processor2 package
 
 %global hsmusers_group hsmusers
 %global	debug_package %{nil}
@@ -15,7 +14,7 @@
 Name:           luna
 Epoch:          1
 Version:        10.3.0
-Release:        5%{?dist}
+Release:        6%{?dist}
 Summary:        Linux Client Software for Thales Luna HSMs
 License:        Thales Luna HSM License Agreement
 URL:            https://cpl.thalesgroup.com/encryption/hardware-security-modules/general-purpose-hsms
@@ -24,15 +23,19 @@ ExclusiveArch:  x86_64
 
 Source0:        %{name}-%{version}.tar.xz
 Source1:        %{name}-tarball.sh
-Source2:        %{name}-pedserver.service
-Source3:        %{name}-pedserver.xml
-Source4:        %{name}-pedclient.service
+Source2:        pedserver.service
+Source3:        pedclient.service
+Source4:        rbs.service
+Source5:        pedserver.xml
+Source6:        rbs.xml
 
 Patch0:         %{name}-config-paths.patch
 
 BuildRequires:  firewalld-filesystem
 BuildRequires:  javapackages-tools
 BuildRequires:  systemd-devel
+
+Requires:       %{name}-filesystem == %{?epoch:%{epoch}:}%{version}-%{release}
 
 Provides:       ckdemo == %{?epoch:%{epoch}:}%{version}-%{release}
 Obsoletes:      ckdemo < %{?epoch:%{epoch}:}%{version}-%{release}
@@ -69,9 +72,17 @@ Obsoletes:      vtl < %{?epoch:%{epoch}:}%{version}-%{release}
 Linux Client Software for Thales Luna HSM 7.7.0 for Network HSM and PCI-e HSM
 release. Includes Client Software, Drivers, Remote PED And Backup HSM.
 
+%package        filesystem
+Summary:        Skeletion filesystem for %{name}
+BuildArch:      noarch
+
+%description    filesystem
+This package contains the skeleton filesystem for the various Luna Client
+software packages.
+
 %package        devel
 Summary:        Header files and development libraries for %{name}
-Requires:       %{name}%{?_isa} == %{version}-%{release}
+Requires:       %{name}%{?_isa} == %{?epoch:%{epoch}:}%{version}-%{release}
 Provides:       FMSDK == %{?epoch:%{epoch}:}%{version}-%{release}
 Obsoletes:      FMSDK < %{?epoch:%{epoch}:}%{version}-%{release}
 
@@ -119,6 +130,7 @@ Summary:        Connect a PED to a remote HSM
 Requires:       kmod-lunaped
 Requires:       systemd
 Requires:       firewalld-filesystem
+Requires:       %{name}-filesystem == %{?epoch:%{epoch}:}%{version}-%{release}
 Provides:       PedServer == %{?epoch:%{epoch}:}%{version}-%{release}
 Obsoletes:      PedServer < %{?epoch:%{epoch}:}%{version}-%{release}
 
@@ -129,12 +141,13 @@ HSM).
 
 %package        pedclient
 Summary:        Accept connections from A remote PED.
-Requires:       %{name}%{?_isa} == %{version}-%{release}
+Requires:       %{name}%{?_isa} == %{?epoch:%{epoch}:}%{version}-%{release}
+Requires:       %{name}-filesystem == %{?epoch:%{epoch}:}%{version}-%{release}
 Requires:       systemd
 Requires:       kmod-k7
 Requires:       kmod-g7
-#Requires:       kmod-uhd
-#Requires:       kmod-vkd
+Requires:       kmod-uhd
+Requires:       kmod-vkd
 Provides:       pedClient == %{?epoch:%{epoch}:}%{version}-%{release}
 Obsoletes:      pedClient < %{?epoch:%{epoch}:}%{version}-%{release}
 
@@ -144,10 +157,31 @@ on a computer with a contained Luna K-card HSM or with a USB-connected Luna G5
 (or Backup) HSM - anchors the HSM end of the Remote PED service and initiates
 the contact with a PedServer instance, on behalf of its HSM.
 
+%package        rbs
+Summary:        Luna Remote Backup Server
+Requires:       %{name}%{?_isa} == %{?epoch:%{epoch}:}%{version}-%{release}
+Requires:       %{name}-pedclient%{?_isa} == %{?epoch:%{epoch}:}%{version}-%{release}
+Requires:       %{name}-filesystem == %{?epoch:%{epoch}:}%{version}-%{release}
+Requires:       systemd
+Requires:       kmod-uhd
+Provides:       rbs == %{?epoch:%{epoch}:}%{version}-%{release}
+Obsoletes:      rbs < %{?epoch:%{epoch}:}%{version}-%{release}
+
+%description    rbs
+The SafeNet Luna Backup HSM is connected to a remote client workstation that
+communicates with the client via the Remote Backup Service (RBS). It is useful
+in deployments where backups are stored in a separate location from the SafeNet
+Luna Network HSM, to protect against catastrophic loss (fire, flood, etc).
+
+RBS is a utility, included with the SafeNet Luna HSM Client software, that runs
+on a workstation hosting one or more Backup HSMs. When RBS is configured and
+running, other clients or HSMs registered to it can see its Backup HSM(s) as
+slots in LunaCM.
+
 %package        samples
 Summary:        Luna Client code samples
 BuildArch:      noarch
-Requires:       %{name}-devel%{?_isa} == %{version}-%{release}
+Requires:       %{name}-devel%{?_isa} == %{?epoch:%{epoch}:}%{version}-%{release}
 Provides:       ckSample == %{?epoch:%{epoch}:}%{version}-%{release}
 Obsoletes:      ckSample < %{?epoch:%{epoch}:}%{version}-%{release}
 Provides:       lunajcprovsamples == %{?epoch:%{epoch}:}%{version}-%{release}
@@ -185,6 +219,7 @@ cp -f usr/safenet/lunaclient/sbin/* %{buildroot}%{_sbindir}/
 mv %{buildroot}%{_bindir}/PedServer %{buildroot}%{_sbindir}/
 # Symlink to find the binary
 ln -sf PedServer %{buildroot}%{_sbindir}/pedServer
+cp -f usr/safenet/lunaclient/rbs/bin/* %{buildroot}%{_sbindir}/
 
 # Headers
 mkdir -p %{buildroot}%{_includedir}
@@ -195,6 +230,7 @@ mkdir -p %{buildroot}%{_libdir}
 cp -f usr/safenet/luna{client,fmsdk}/lib/* \
   usr/safenet/lunaclient/jcprov/lib/*.so \
   usr/safenet/lunaclient/jsp/lib/*.so \
+  usr/safenet/lunaclient/rbs/lib/*.so \
   %{buildroot}%{_libdir}/
 
 # Java
@@ -203,14 +239,19 @@ cp -f usr/safenet/lunaclient/{jsp,jcprov}/lib/*.jar %{buildroot}%{_javadir}/luna
 cp -f usr/safenet/lunaclient/jsp/bin/*.{class,jar} %{buildroot}%{_javadir}/luna/
 
 # Configuration files
-mkdir -p %{buildroot}%{_sysconfdir}
-cp -f etc/*.conf %{buildroot}%{_sysconfdir}/
-mv %{buildroot}%{_bindir}/openssl.cnf %{buildroot}%{_sysconfdir}/
+mkdir -p %{buildroot}%{_sysconfdir}/lunaclient/
+cp -f etc/Chrystoki.conf %{buildroot}%{_sysconfdir}/
+cp -f etc/pedServer.conf %{buildroot}%{_sysconfdir}/lunaclient/
+mv -f %{buildroot}%{_bindir}/openssl.cnf %{buildroot}%{_sysconfdir}/lunaclient/
+cp -f usr/safenet/lunaclient/rbs/server/server.cnf %{buildroot}%{_sysconfdir}/lunaclient/
 
-# Systemd & firewall
-install -p -m 644 -D %{SOURCE2} %{buildroot}%{_unitdir}/pedserver.service
-install -p -m 644 -D %{SOURCE3} %{buildroot}%{_prefix}/lib/firewalld/services/pedserver.xml
-install -p -m 644 -D %{SOURCE4} %{buildroot}%{_unitdir}/pedclient.service
+# Systemd
+mkdir -p %{buildroot}%{_unitdir}
+install -p -m 644 %{SOURCE2} %{SOURCE3} %{SOURCE4} %{buildroot}%{_unitdir}/
+
+# Firewalld
+mkdir -p %{buildroot}%{_prefix}/lib/firewalld/services
+install -p -m 644 %{SOURCE5} %{SOURCE6} %{buildroot}%{_prefix}/lib/firewalld/services/
 
 # Javadoc
 mkdir -p %{buildroot}%{_javadocdir}/luna
@@ -225,15 +266,16 @@ cp -fr usr/safenet/lunaclient/jcprov/javadocs %{buildroot}%{_javadocdir}/luna/jc
 mkdir -p %{buildroot}%{_var}/log/luna
 
 # Compatibility symlinks
-mkdir -p %{buildroot}%{_sysconfdir}/lunaclient
 mkdir -p %{buildroot}%{_prefix}/safenet
 ln -sf %{_sysconfdir}/lunaclient %{buildroot}%{_prefix}/safenet/lunaclient
 ln -sf %{_libdir} %{buildroot}%{_sysconfdir}/lunaclient/lib
 ln -sf %{_bindir} %{buildroot}%{_sysconfdir}/lunaclient/bin
 
+%if 0%{?rhel} == 7
 %ldconfig_scriptlets
 
 %ldconfig_scriptlets java
+%endif
 
 %pre
 getent group %{hsmusers_group} >/dev/null || groupadd -r %{hsmusers_group}
@@ -258,6 +300,22 @@ getent group %{hsmusers_group} >/dev/null || groupadd -r %{hsmusers_group}
 %postun pedclient
 %systemd_postun_with_restart pedclient.service
 
+%post   rbs
+%if 0%{?rhel} == 7
+%{?ldconfig}
+%endif
+%systemd_post rbs.service
+%firewalld_reload
+
+%preun  rbs
+%systemd_preun rbs.service
+
+%postun rbs
+%if 0%{?rhel} == 7
+%{?ldconfig}
+%endif
+%systemd_postun_with_restart rbs.service
+
 %files
 %license 008-010068-001_EULA_HSM7_SW_revC.txt
 %{_sbindir}/hsmrecover
@@ -279,8 +337,10 @@ getent group %{hsmusers_group} >/dev/null || groupadd -r %{hsmusers_group}
 %{_libdir}/libshim.so
 %exclude %{_libdir}/libSoftToken.so
 %config %attr(644,root,%{hsmusers_group}) %{_sysconfdir}/Chrystoki.conf
+
+%files filesystem
+# Compatibility links:
 %{_sysconfdir}/lunaclient
-# Compatibility links
 %{_prefix}/safenet
 %{_var}/log/luna
 
@@ -302,17 +362,27 @@ getent group %{hsmusers_group} >/dev/null || groupadd -r %{hsmusers_group}
 %{_sbindir}/PedServer
 %{_sbindir}/pedServer
 %{_unitdir}/pedserver.service
-%config %attr(644,root,root) %{_sysconfdir}/pedServer.conf
-%config %attr(644,root,root) %{_sysconfdir}/openssl.cnf
+%config %attr(644,root,root) %{_sysconfdir}/lunaclient/pedServer.conf
+%config %attr(644,root,root) %{_sysconfdir}/lunaclient/openssl.cnf
 
 %files pedclient
 %{_bindir}/pedClient
 %{_unitdir}/pedclient.service
 
+%files rbs
+%{_prefix}/lib/firewalld/services/rbs.xml
+%{_libdir}/librbs_processor2.so
+%{_sbindir}/rbs
+%config %attr(644,root,root) %{_sysconfdir}/lunaclient/server.cnf
+%{_unitdir}/rbs.service
+
 %files samples
 %doc samples
 
 %changelog
+* Fri Feb 12 2021 Simone Caronni <negativo17@gmail.com> - 1:10.3.0-6
+- Add Remote Backup Server package.
+
 * Fri Feb 12 2021 Simone Caronni <negativo17@gmail.com> - 1:10.3.0-5
 - Update configuration files.
 

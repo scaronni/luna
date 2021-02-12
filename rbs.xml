@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<service>
+  <short>rbs</short>
+  <description>Luna Remote Backup Server</description>
+  <port protocol="tcp" port="1792"/>
+</service>
