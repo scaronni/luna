@@ -14,7 +14,7 @@
 Name:           luna
 Epoch:          1
 Version:        10.3.0
-Release:        6%{?dist}
+Release:        7%{?dist}
 Summary:        Linux Client Software for Thales Luna HSMs
 License:        Thales Luna HSM License Agreement
 URL:            https://cpl.thalesgroup.com/encryption/hardware-security-modules/general-purpose-hsms
@@ -178,6 +178,13 @@ on a workstation hosting one or more Backup HSMs. When RBS is configured and
 running, other clients or HSMs registered to it can see its Backup HSM(s) as
 slots in LunaCM.
 
+%package        snmp
+Summary:        Luna SNMP MIBs
+Requires:       net-snmp-libs
+
+%description    snmp
+This package contains SNMP MIBs.
+
 %package        samples
 Summary:        Luna Client code samples
 BuildArch:      noarch
@@ -264,6 +271,10 @@ cp -fr usr/safenet/lunaclient/jcprov/javadocs %{buildroot}%{_javadocdir}/luna/jc
 
 # Logging
 mkdir -p %{buildroot}%{_var}/log/luna
+
+# SNMP MIBs
+mkdir -p %{buildroot}%{_datadir}/snmp/mibs
+install -p -m 0644 snmp/* %{buildroot}%{_datadir}/snmp/mibs/
 
 # Compatibility symlinks
 mkdir -p %{buildroot}%{_prefix}/safenet
@@ -376,10 +387,16 @@ getent group %{hsmusers_group} >/dev/null || groupadd -r %{hsmusers_group}
 %config %attr(644,root,root) %{_sysconfdir}/lunaclient/server.cnf
 %{_unitdir}/rbs.service
 
+%files snmp
+%{_datadir}/snmp/mibs/*
+
 %files samples
 %doc samples
 
 %changelog
+* Tue Feb 16 2021 Simone Caronni <negativo17@gmail.com> - 1:10.3.0-7
+- Create SNMP MIBs subpackage.
+
 * Fri Feb 12 2021 Simone Caronni <negativo17@gmail.com> - 1:10.3.0-6
 - Add Remote Backup Server package.
 
