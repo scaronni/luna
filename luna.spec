@@ -14,7 +14,7 @@
 Name:           luna
 Epoch:          1
 Version:        10.3.0
-Release:        7%{?dist}
+Release:        8%{?dist}
 Summary:        Linux Client Software for Thales Luna HSMs
 License:        Thales Luna HSM License Agreement
 URL:            https://cpl.thalesgroup.com/encryption/hardware-security-modules/general-purpose-hsms
@@ -351,7 +351,9 @@ getent group %{hsmusers_group} >/dev/null || groupadd -r %{hsmusers_group}
 
 %files filesystem
 # Compatibility links:
-%{_sysconfdir}/lunaclient
+%dir %{_sysconfdir}/lunaclient
+%{_sysconfdir}/lunaclient/bin
+%{_sysconfdir}/lunaclient/lib
 %{_prefix}/safenet
 %{_var}/log/luna
 
@@ -394,6 +396,9 @@ getent group %{hsmusers_group} >/dev/null || groupadd -r %{hsmusers_group}
 %doc samples
 
 %changelog
+* Tue May 04 2021 Simone Caronni <negativo17@gmail.com> - 1:10.3.0-8
+- Fix ownership of config directories.
+
 * Tue Feb 16 2021 Simone Caronni <negativo17@gmail.com> - 1:10.3.0-7
 - Create SNMP MIBs subpackage.
 
